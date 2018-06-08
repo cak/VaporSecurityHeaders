@@ -462,18 +462,20 @@ class HeaderTests: XCTestCase {
         var services = Services.default()
         var middlewareConfig = MiddlewareConfig()
 
+        middlewareConfig.use(SecurityHeaders.self)
+
+        middlewareConfig.use(ErrorMiddleware.self)
+        services.register { worker in
+            return ErrorMiddleware() { request, error in
+                return request.makeResponse()
+            }
+        }
+
         if let fileMiddleware = fileMiddleware {
             middlewareConfig.use(StubFileMiddleware.self)
             services.register(fileMiddleware)
         }
 
-        middlewareConfig.use(ErrorMiddleware.self)
-        services.register { worker in
-          return ErrorMiddleware() { request, error in
-            return request.makeResponse()
-          }
-        }
-        middlewareConfig.use(SecurityHeaders.self)
         services.register(securityHeadersToAdd.build())
         services.register(middlewareConfig)
 
